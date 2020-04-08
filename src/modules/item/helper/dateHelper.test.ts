@@ -12,6 +12,9 @@ test('Test createIsoDateTimeFromDateAndTime', () => {
 
     isoDateTime = createIsoDateTimeFromDateAndTime('2004-09-12', '13:25:41', '+03:00')
     expect(isoDateTime).toBe('2004-09-12T13:25:41+03:00')
+
+    isoDateTime = createIsoDateTimeFromDateAndTime('2004-09-12', '11:09:21', '-04:00')
+    expect(isoDateTime).toBe('2004-09-12T11:09:21-04:00')
 })
 
 test('Test creating ISO datetime with invalid time parts', () => {

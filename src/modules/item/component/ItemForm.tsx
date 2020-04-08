@@ -138,7 +138,7 @@ const ItemForm: React.FC<ItemFormProps> = (props) => {
             {/* Hidden timezone input */}
             <Form.Control
                 name="pubTimeZone"
-                type="text"
+                type="hidden"
                 defaultValue={pubTZ ? pubTZ : '+00:00'}
                 required />
 

@@ -18,7 +18,7 @@ export function createIsoDateTimeFromDateAndTime(
 
     const dateParts: number[] = date.split('-', 3).map(part => parseInt(part))
     const timeParts: number[] = time.split(':', 3).map(part => parseInt(part))
-    const tzParts: number[] = timezone.split(':', 2).map(part => parseInt(part))
+    const tzParts: number[] = timezone.substring(1, timezone.length).split(':', 2).map(part => parseInt(part))
 
     const [year, month, day] = dateParts
     const [hours, minutes, seconds] = timeParts
@@ -26,6 +26,7 @@ export function createIsoDateTimeFromDateAndTime(
 
     validateDate(year, month, day)
     validateTime(hours, minutes, seconds)
+
     validateTime(tzHours, tzMinutes)
 
     return getYearMonthAndDay(dateParts).join('-') + 'T'
