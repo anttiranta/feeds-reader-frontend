@@ -1,7 +1,6 @@
 // Imports
-import React, { useState } from 'react'
+import React from 'react'
 import { withRouter, RouteComponentProps } from 'react-router-dom'
-import { useMutation } from '@apollo/react-hooks'
 import { connect, ConnectedProps } from 'react-redux'
 
 // UI Component Imports
@@ -11,16 +10,13 @@ import Button from 'react-bootstrap/Button'
 
 // App Imports
 import CategorySelector from './item_form/CategorySelector'
-import {
-    createIsoDateTimeFromDateAndTime,
-    isoDateTimeToDateAndTime
-} from '../helper/dateHelper'
-import ItemInteface from '../types/ItemInterface'
 import { setError, setSuccess } from '../../common/component/notification/redux/actions'
+import { nullToEmptyString } from '../../../utils/stringUtils'
+import itemRoutes from '../../../setup/routes/item'
+import useItemForm from '../hooks/useItemForm'
 import createItem from '../graphql/mutations/createItem'
 import updateItem from '../graphql/mutations/updateItem'
-import itemRoutes from '../../../setup/routes/item'
-import { nullToEmptyString } from '../../../utils/stringUtils'
+import ItemInteface from '../types/ItemInterface'
 
 const connector = connect(null, { setError, setSuccess })
 
@@ -32,58 +28,25 @@ type ItemFormProps = PropsFromRedux & RouteComponentProps & {
 
 // Component
 const ItemForm: React.FC<ItemFormProps> = (props) => {
-    const [validated, setValidated] = useState(false);
-    const [createOrUpdateItem, { loading }] = useMutation(props.item && props.item.id ? updateItem : createItem, {
-        onError: (error) => {
-            props.setError('We could not save the item. Please try again later.')
-        },
-        onCompleted: (data) => {
-            props.setSuccess('Item saved successfully.')
-
-            props.history.push(itemRoutes.showItem.path(
-                props.item && props.item.id ? data.updateItem.id : data.createItem.id
-            ))
-        }
-    })
-
     const { item } = props
-    const [pubDate, pubTime, pubTZ] = item && item.pubDate ? isoDateTimeToDateAndTime(item.pubDate) : []
+    const createOrUpdateItemMutation = item && item.id ? updateItem : createItem
 
-    const handleSubmit = async (event: React.BaseSyntheticEvent) => {
-        event.preventDefault();
-        const form = event.currentTarget;
-
-        const isValid = form.checkValidity()
-        setValidated(true);
-
-        if (isValid) {
-            const id = parseInt(form.id.value)
-            const title = form.title.value
-            const description = form.description.value
-            const link = form.link.value
-            const pubDate = createIsoDateTimeFromDateAndTime(
-                form.pubDate.value,
-                form.pubTime.value,
-                form.pubTimeZone.value
-            )
-            const comments = form.comments.value
-            const categoryId = form.categoryId ? parseInt(form.categoryId.value) : 0
-
-            if (id > 0) {
-                createOrUpdateItem({ variables: { input: {id, title, description, link, pubDate, comments, categoryId} } })
-            } else {
-                createOrUpdateItem({ variables: { input: {title, description, link, pubDate, comments, categoryId} } })
-            }
-        }
-    };
-
-    const handleCancel = (event: React.BaseSyntheticEvent) => {
-        event.preventDefault()
-        props.history.goBack()
+    const onError = () => {
+        props.setError('We could not save the item. Please try again later.')
     }
 
+    const onSuccess = (id: number) => {
+        props.setSuccess('Item saved successfully.')
+        props.history.push(itemRoutes.showItem.path(id))
+    }
+
+    const ifProps = useItemForm({ ...props, createOrUpdateItemMutation, onError, onSuccess })
+    const { handleCancel, handleSubmit, getItemPubDateValues, isLoading, isValidated } = ifProps;
+
+    const [pubDate, pubTime, pubTZ] = getItemPubDateValues(item)
+
     return (
-        <Form noValidate validated={validated} onSubmit={handleSubmit}>
+        <Form noValidate validated={isValidated} onSubmit={handleSubmit}>
             <Form.Control
                 defaultValue={item ? item.id : '0'}
                 type="hidden"
@@ -157,7 +120,7 @@ const ItemForm: React.FC<ItemFormProps> = (props) => {
             <Button
                 variant="primary"
                 type="submit"
-                disabled={loading}>
+                disabled={isLoading}>
                 Submit
             </Button>{' '}
             <Button variant="secondary" onClick={handleCancel}>Cancel</Button>

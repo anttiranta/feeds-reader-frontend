@@ -14,6 +14,6 @@ const useInput = (type: string, defaultValue: string | number | boolean = '') =>
       value,
       onChange
     }
-  }
+}
 
 export default useInput

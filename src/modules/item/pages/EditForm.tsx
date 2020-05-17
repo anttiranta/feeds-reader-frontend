@@ -1,8 +1,7 @@
 // Imports
-import React, { useEffect, useRef } from 'react'
+import React from 'react'
 import { Helmet } from 'react-helmet'
-import { useLazyQuery, QueryLazyOptions } from '@apollo/react-hooks'
-import { Redirect, RouteComponentProps } from 'react-router-dom'
+import { Redirect } from 'react-router-dom'
 
 // App Imports
 import ItemForm from '../component/ItemForm'
@@ -10,52 +9,24 @@ import Loading from '../../common/component/Loading';
 import getItemById from '../graphql/queries/getItemById'
 import { renderIf } from '../../../utils/elementUtils'
 import { routes } from '../../../setup/routes'
-
-// Route Params
-type EditFormRouteParams = {
-    id?: string,
-}
-
-// Get Item Query Params
-class GetItemParams implements QueryLazyOptions<{ id: number }> {
-    variables?: { id: number };
-
-    constructor(id: string) {
-        this.variables = { id: parseInt(id) }
-    }
-}
+import useEditForm from '../hooks/useEditForm'
+import EditFormProps from '../types/item/form/EditFormProps'
 
 // Component
-const EditForm: React.FC<RouteComponentProps<EditFormRouteParams>> = (props) => {
-    const [getItem, { called, loading, error, data }] = useLazyQuery(getItemById, 
-        new GetItemParams(props.match.params.id)
-    )
-    const prevProps = useRef(null)
-
-    const isNewEntry = () => {
-        return props.match.params.id === undefined
-    }
+const EditForm: React.FC<EditFormProps> = (props) => {
+    const efProps = useEditForm({ ...props, getItemQuery: getItemById })
+    const { item, isNewEntry, hasError, isLoading, fetchCalled } = efProps;
 
     const getPageTitle = () => {
         return (isNewEntry() ? 'Add' : 'Edit') + ' Item'
     }
 
-    useEffect(() => {
-        if (prevProps.current === null || prevProps.current.location.pathname !== props.location.pathname) {
-            if (props.match.params.id) {
-                getItem(new GetItemParams(props.match.params.id))
-            }
-        }
-        prevProps.current = props
-    }, [props, getItem])
-
-    if (called && loading) {
+    if (fetchCalled && isLoading) {
         return <Loading />
     }
-    if (error) {
+    if (hasError) {
         return <Redirect to={routes.notFound.path} />
     }
-    let item = data ? data.getItemById : undefined
 
     return (
         <>
